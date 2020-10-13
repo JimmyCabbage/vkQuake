@@ -214,12 +214,30 @@ Draw_PicFromWad
 */
 qpic_t *Draw_PicFromWad (const char *name)
 {
+	int i;
+	cachepic_t *pic;
 	qpic_t	*p;
 	glpic_t	gl;
 	src_offset_t offset; //johnfitz
+	lumpinfo_t *info;
 
-	p = (qpic_t *) W_GetLumpName (name);
-	if (!p) return pic_nul; //johnfitz
+	//Spike -- added cachepic stuff here, to avoid glitches if the function is called multiple times with the same image.
+	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
+	{
+		if (!strcmp (name, pic->name))
+			return &pic->pic;
+	}
+	if (menu_numcachepics == MAX_CACHED_PICS)
+		Sys_Error ("menu_numcachepics == MAX_CACHED_PICS");
+
+	p = (qpic_t *) W_GetLumpName (name, &info);
+	if (!p)
+	{
+		Con_SafePrintf ("W_GetLumpName: %s not found\n", name);
+		return pic_nul; //johnfitz
+	}
+	if (info->size < sizeof(int)*2 || 8+p->width*p->height < info->size) Sys_Error ("Draw_PicFromWad: pic \"%s\" truncated", name);
+	if (info->type != TYP_QPIC) Sys_Error ("Draw_PicFromWad: lump \"%s\" is not a qpic", name);
 
 	// load little ones into the scrap
 	if (p->width < 64 && p->height < 64)
@@ -251,16 +269,19 @@ qpic_t *Draw_PicFromWad (const char *name)
 		offset = (src_offset_t)p - (src_offset_t)wad_base + sizeof(int)*2; //johnfitz
 
 		gl.gltexture = TexMgr_LoadImage (NULL, texturename, p->width, p->height, SRC_INDEXED, p->data, WADFILENAME,
-										  offset, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //johnfitz -- TexMgr
+										  offset, (premul_hud?TEXPREF_PREMULTIPLY:0)|TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //johnfitz -- TexMgr
 		gl.sl = 0;
 		gl.sh = (float)p->width/(float)TexMgr_PadConditional(p->width); //johnfitz
 		gl.tl = 0;
 		gl.th = (float)p->height/(float)TexMgr_PadConditional(p->height); //johnfitz
 	}
 
-	memcpy (p->data, &gl, sizeof(glpic_t));
+	menu_numcachepics++;
+	strcpy (pic->name, name);
+	pic->pic = *p;
+	memcpy (pic->pic.data, &gl, sizeof(glpic_t));
 
-	return p;
+	return &pic->pic;
 }
 
 /*

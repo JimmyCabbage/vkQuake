@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	#ifndef FNM_CASEFOLD
 		#define FNM_CASEFOLD 0	//not available. I guess we're not on gnu/linux
 	#endif
+#else
+#include <windows.h>
 #endif
 
 static char	*largv[MAX_NUM_ARGVS + 1];

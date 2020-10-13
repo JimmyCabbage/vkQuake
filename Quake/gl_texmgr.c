@@ -776,6 +776,23 @@ static byte *TexMgr_PadImageW (byte *in, int width, int height, byte padbyte)
 	return data;
 }
 
+static byte *TexMgr_PreMultiply32(byte *in, size_t width, size_t height)
+{
+	size_t pixels = width * height;
+	byte *out = (byte *) Hunk_Alloc(pixels*4);
+	byte *result = out;
+	while (pixels --> 0)
+	{
+		out[0] = (in[0]*in[3])>>8;
+		out[1] = (in[1]*in[3])>>8;
+		out[2] = (in[2]*in[3])>>8;
+		out[3] = in[3];
+		in += 4;
+		out += 4;
+	}
+	return result;
+}
+
 /*
 ================
 TexMgr_PadImageH -- return image with height padded up to power-of-two dimentions
@@ -843,6 +860,10 @@ TexMgr_LoadImage32 -- handles 32bit source data
 */
 static void TexMgr_LoadImage32 (gltexture_t *glt, unsigned *data)
 {
+	//do this before any rescaling
+	if (glt->flags & TEXPREF_PREMULTIPLY)
+		data = (unsigned*)TexMgr_PreMultiply32((byte*)data, glt->width, glt->height);
+
 	// mipmap down
 	int picmip = (glt->flags & TEXPREF_NOPICMIP) ? 0 : q_max((int)gl_picmip.value, 0);
 	int mipwidth = TexMgr_SafeTextureSize (glt->width >> picmip);
@@ -1080,6 +1101,46 @@ static void TexMgr_LoadImage32 (gltexture_t *glt, unsigned *data)
 	image_memory_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	image_memory_barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &image_memory_barrier);
+}
+
+void TexMgr_BlockSize (enum srcformat format, int *bytes, int *width, int *height)
+{
+	*width = 1;
+	*height = 1;
+	switch(format)
+	{
+	case SRC_RGBA:
+		*bytes = 4;
+		break;
+	case SRC_LIGHTMAP:
+		*bytes = lightmap_bytes;
+		break;
+	case SRC_INDEXED:
+		*bytes = 1;
+		break;
+	default:
+		*bytes = 0;
+		break;
+	}
+}
+
+size_t TexMgr_ImageSize (int width, int height, enum srcformat format)
+{
+	switch(format)
+	{
+	case SRC_RGBA:
+		return width*height*4;
+	case SRC_LIGHTMAP:
+		return width*height*lightmap_bytes;
+	case SRC_INDEXED:
+		return width*height;
+	case SRC_EXTERNAL:	//panic
+		Con_Printf("TexMgr_ImageCompressedSize called for SRC_EXTERNAL\n");
+		return 0;
+	default:
+		Con_Printf("TexMgr_ImageCompressedSize called with unknown srcformat\n");
+		return 0;
+	}
 }
 
 /*
@@ -1387,42 +1448,11 @@ invalid:
 	case SRC_RGBA:
 		TexMgr_LoadImage32 (glt, (unsigned *)data);
 		break;
-	default:
-		TexMgr_LoadImageCompressed (glt, data);
-		break;
 	}
 
 	if (malloced)
 		free(data);
 	Hunk_FreeToLowMark(mark);
-}
-
-/*
-================
-TexMgr_ReloadImages -- reloads all texture images. called only by vid_restart
-================
-*/
-void TexMgr_ReloadImages (void)
-{
-	gltexture_t *glt;
-
-// ericw -- tricky bug: if the hunk is almost full, an allocation in TexMgr_ReloadImage
-// triggers cache items to be freed, which calls back into TexMgr to free the
-// texture. If this frees 'glt' in the loop below, the active_gltextures
-// list gets corrupted.
-// A test case is jam3_tronyn.bsp with -heapsize 65536, and do several mode
-// switches/fullscreen toggles
-// 2015-09-04 -- Cache_Flush workaround was causing issues (http://sourceforge.net/p/quakespasm/bugs/10/)
-// switching to a boolean flag.
-	in_reload_images = true;
-
-	for (glt = active_gltextures; glt; glt = glt->next)
-	{
-		glGenTextures(1, &glt->texnum);
-		TexMgr_ReloadImage (glt, -1, -1);
-	}
-	
-	in_reload_images = false;
 }
 
 /*

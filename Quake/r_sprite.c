@@ -142,10 +142,6 @@ void R_DrawSpriteModel (entity_t *e)
 		return;
 	}
 
-	//johnfitz: offset decals
-	if (psprite->type == SPR_ORIENTED)
-		GL_PolygonOffset (OFFSET_DECAL);
-
 	if (e->netstate.scale != 16)
 		scale = e->netstate.scale/16.0;
 	else

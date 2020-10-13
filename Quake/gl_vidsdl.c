@@ -2544,17 +2544,10 @@ static void VID_Restart (void)
 	// keep cvars in line with actual mode
 	//
 	VID_SyncCvars();
-
-	//
-	// update mouse grab
-	//
-	if (key_dest == key_console || key_dest == key_menu)
-	{
-		if (modestate == MS_WINDOWED)
-			IN_Deactivate(true);
-		else if (modestate == MS_FULLSCREEN)
-			IN_Activate();
-	}
+//
+// update mouse grab
+//
+	IN_UpdateGrabs();
 
 	scr_initialized = true;
 }
