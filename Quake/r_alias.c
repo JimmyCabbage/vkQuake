@@ -83,11 +83,47 @@ Returns the offset of the first vertex's meshxyz_t.xyz in the vbo for the given
 model and pose.
 =============
 */
-static VkDeviceSize GLARB_GetXYZOffset (aliashdr_t *hdr, int pose)
+static VkDeviceSize GLARB_GetXYZOffset_MDL (aliashdr_t *hdr, int pose)
 {
-	meshxyz_t dummy;
-	int xyzoffs = ((char*)&dummy.xyz - (char*)&dummy);
-	return currententity->model->vboxyzofs + (hdr->numverts_vbo * pose * sizeof (meshxyz_t)) + xyzoffs;
+	meshxyz_mdl_t dummy;
+	size_t xyzoffs = ((char*)&dummy.xyz - (char*)&dummy);
+	return hdr->vbovertofs + (hdr->numverts_vbo * pose * sizeof (meshxyz_mdl_t)) + xyzoffs;
+}
+static VkDeviceSize GLARB_GetXYZOffset_MDLQF (aliashdr_t *hdr, int pose)
+{
+	meshxyz_mdl16_t dummy;
+	size_t xyzoffs = ((char*)&dummy.xyz - (char*)&dummy);
+	return hdr->vbovertofs + (hdr->numverts_vbo * pose * sizeof (meshxyz_mdl16_t)) + xyzoffs;
+}
+static VkDeviceSize GLARB_GetXYZOffset_MD3 (aliashdr_t *hdr, int pose)
+{
+	meshxyz_md3_t dummy;
+	size_t xyzoffs = ((char*)&dummy.xyz - (char*)&dummy);
+	return hdr->vbovertofs + (hdr->numverts_vbo * pose * sizeof (meshxyz_md3_t)) + xyzoffs;
+}
+
+/*
+=============
+GLARB_GetNormalOffset
+
+Returns the offset of the first vertex's meshxyz_t.normal in the vbo for the
+given model and pose.
+=============
+*/
+static VkDeviceSize GLARB_GetNormalOffset_MDL (aliashdr_t *hdr, int pose)
+{
+	const size_t normaloffs = offsetof (meshxyz_mdl_t, normal);
+	return hdr->vbovertofs + (hdr->numverts_vbo * pose * sizeof (meshxyz_mdl_t)) + normaloffs;
+}
+static VkDeviceSize GLARB_GetNormalOffset_MDLQF (aliashdr_t *hdr, int pose)
+{
+	const size_t normaloffs = offsetof (meshxyz_mdl16_t, normal);
+	return hdr->vbovertofs + (hdr->numverts_vbo * pose * sizeof (meshxyz_mdl16_t)) + normaloffs;
+}
+static VkDeviceSize GLARB_GetNormalOffset_MD3 (aliashdr_t *hdr, int pose)
+{
+	const size_t normaloffs = offsetof (meshxyz_md3_t, normal);
+	return hdr->vbovertofs + (hdr->numverts_vbo * pose * sizeof (meshxyz_md3_t)) + normaloffs;
 }
 
 /*
@@ -134,10 +170,23 @@ static void GL_DrawAliasFrame (aliashdr_t *paliashdr, lerpdata_t lerpdata, gltex
 	VkDescriptorSet descriptor_sets[3] = { tx->descriptor_set, (fb != NULL) ? fb->descriptor_set : tx->descriptor_set, ubo_set };
 	vulkan_globals.vk_cmd_bind_descriptor_sets(vulkan_globals.command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkan_globals.alias_pipeline.layout.handle, 0, 3, descriptor_sets, 1, &uniform_offset);
 
-	VkBuffer vertex_buffers[3] = { currententity->model->vertex_buffer, currententity->model->vertex_buffer, currententity->model->vertex_buffer };
-	VkDeviceSize vertex_offsets[3] = { (unsigned)currententity->model->vbostofs, GLARB_GetXYZOffset (paliashdr, lerpdata.pose1), GLARB_GetXYZOffset (paliashdr, lerpdata.pose2) };
-	vulkan_globals.vk_cmd_bind_vertex_buffers(vulkan_globals.command_buffer, 0, 3, vertex_buffers, vertex_offsets);
-	vulkan_globals.vk_cmd_bind_index_buffer(vulkan_globals.command_buffer, currententity->model->index_buffer, 0, VK_INDEX_TYPE_UINT16);
+	switch(paliashdr->poseverttype)
+	{
+	case PV_QUAKE1:
+		{
+			VkBuffer vertex_buffers[3] = { currententity->model->vertex_buffer, currententity->model->vertex_buffer, currententity->model->vertex_buffer };
+			VkDeviceSize vertex_offsets[3] = { paliashdr->vbostofs, GLARB_GetXYZOffset_MDL (paliashdr, lerpdata.pose1), GLARB_GetXYZOffset_MDL (paliashdr, lerpdata.pose2) };
+			vulkan_globals.vk_cmd_bind_vertex_buffers(vulkan_globals.command_buffer, 0, 3, vertex_buffers, vertex_offsets);
+			vulkan_globals.vk_cmd_bind_index_buffer(vulkan_globals.command_buffer, currententity->model->index_buffer, 0, VK_INDEX_TYPE_UINT16);
+		}
+	case PV_QUAKEFORGE:
+		{
+			VkBuffer vertex_buffers[3] = { currententity->model->vertex_buffer, currententity->model->vertex_buffer, currententity->model->vertex_buffer };
+			VkDeviceSize vertex_offsets[3] = { paliashdr->vbostofs, GLARB_GetXYZOffset_MDLQF (paliashdr, lerpdata.pose1), GLARB_GetXYZOffset_MDLQF (paliashdr, lerpdata.pose2) };
+			vulkan_globals.vk_cmd_bind_vertex_buffers(vulkan_globals.command_buffer, 0, 3, vertex_buffers, vertex_offsets);
+			vulkan_globals.vk_cmd_bind_index_buffer(vulkan_globals.command_buffer, currententity->model->index_buffer, 0, VK_INDEX_TYPE_UINT16);
+		}
+	}
 
 	vulkan_globals.vk_cmd_draw_indexed(vulkan_globals.command_buffer, paliashdr->numindexes, 1, 0, 0, 0);
 
@@ -413,7 +462,7 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	float model_matrix[16];
 	IdentityMatrix(model_matrix);
-	R_RotateForEntity (model_matrix, lerpdata.origin, lerpdata.angles);
+	R_RotateForEntity (model_matrix, lerpdata.origin, lerpdata.angles, e->netstate.scale);
 
 	float translation_matrix[16];
 	TranslationMatrix (translation_matrix, paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
@@ -460,7 +509,7 @@ void R_DrawAliasModel (entity_t *e)
 	fb = paliashdr->fbtextures[skinnum][anim];
 	if (e->colormap != vid.colormap && !gl_nocolors.value)
 	{
-		i = e - cl_entities;
+		i = e - cl.entities;
 		if (i >= 1 && i<=cl.maxclients )
 		    tx = playertextures[i - 1];
 	}

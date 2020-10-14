@@ -169,7 +169,7 @@ R_RotateForEntity -- johnfitz -- modified to take origin and angles instead of p
 ===============
 */
 #define DEG2RAD( a ) ( (a) * M_PI_DIV_180 )
-void R_RotateForEntity (float matrix[16], vec3_t origin, vec3_t angles)
+void R_RotateForEntity (float matrix[16], vec3_t origin, vec3_t angles, unsigned char scale)
 {
 	float translation_matrix[16];
 	TranslationMatrix (translation_matrix, origin[0], origin[1], origin[2]);
@@ -182,6 +182,12 @@ void R_RotateForEntity (float matrix[16], vec3_t origin, vec3_t angles)
 	MatrixMultiply (matrix, rotation_matrix);
 	RotationMatrix (rotation_matrix, DEG2RAD(angles[2]), 1, 0, 0);
 	MatrixMultiply (matrix, rotation_matrix);
+
+	if (scale != 16) {
+		float scale_matrix[16];
+		ScaleMatrix (scale_matrix, scale/16.0, scale/16.0, scale/16.0);
+		MatrixMultiply (matrix, scale_matrix);
+	}
 }
 
 //==============================================================================
@@ -518,7 +524,7 @@ void R_ShowTris(void)
 		{
 			currententity = cl_visedicts[i];
 
-			if (currententity == &cl_entities[cl.viewentity]) // chasecam
+			if (currententity == &cl.entities[cl.viewentity]) // chasecam
 				currententity->angles[0] *= 0.3;
 
 			switch (currententity->model->type)

@@ -539,15 +539,12 @@ typedef struct qmodel_s
 //
 // alias model
 //
-	VkBuffer		vertex_buffer;
-	struct glheap_s *	vertex_heap;
+	VkBuffer				vertex_buffer;
+	struct glheap_s *		vertex_heap;
 	struct glheapnode_s *	vertex_heap_node;
-	VkBuffer		index_buffer;
-	struct glheap_s *	index_heap;
+	VkBuffer				index_buffer;
+	struct glheap_s *		index_heap;
 	struct glheapnode_s *	index_heap_node;
-	int				vboindexofs;    // offset in vbo of the hdr->numindexes unsigned shorts
-	int				vboxyzofs;      // offset in vbo of hdr->numposes*hdr->numverts_vbo meshxyz_t
-	int				vbostofs;       // offset in vbo of hdr->numverts_vbo meshst_t
 
 //
 // additional model data
