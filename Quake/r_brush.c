@@ -203,7 +203,7 @@ void R_DrawBrushModel (entity_t *e)
 	}
 	float model_matrix[16];
 	IdentityMatrix(model_matrix);
-	R_RotateForEntity (e->origin, e->angles, e->netstate.scale);
+	R_RotateForEntity (model_matrix, e->origin, e->angles, e->netstate.scale);
 	if (gl_zfix.value)
 	{
 		e->origin[0] += DIST_EPSILON;
@@ -274,7 +274,7 @@ void R_DrawBrushModel_ShowTris(entity_t *e)
 	e->angles[0] = -e->angles[0];	// stupid quake bug
 	float model_matrix[16];
 	IdentityMatrix(model_matrix);
-	R_RotateForEntity (e->origin, e->angles, e->netstate.scale);
+	R_RotateForEntity (model_matrix, e->origin, e->angles, e->netstate.scale);
 	e->angles[0] = -e->angles[0];	// stupid quake bug
 
 	float mvp[16];
