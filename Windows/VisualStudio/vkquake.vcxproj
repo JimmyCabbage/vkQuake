@@ -223,6 +223,7 @@ copy "$(SolutionDir)\..\SDL2\lib64\*.dll" "$(TargetDir)"</Command>
     <ClCompile Include="..\..\Quake\cl_tent.c" />
     <ClCompile Include="..\..\Quake\cmd.c" />
     <ClCompile Include="..\..\Quake\common.c" />
+	<ClCompile Include="..\..\Quake\fs_zip.c" />
     <ClCompile Include="..\..\Quake\console.c" />
     <ClCompile Include="..\..\Quake\crc.c" />
     <ClCompile Include="..\..\Quake\cvar.c" />
@@ -256,15 +257,18 @@ copy "$(SolutionDir)\..\SDL2\lib64\*.dll" "$(TargetDir)"</Command>
     <ClCompile Include="..\..\Quake\net_wipx.c" />
     <ClCompile Include="..\..\Quake\pl_win.c" />
     <ClCompile Include="..\..\Quake\pr_cmds.c" />
+	<ClCompile Include="..\..\Quake\pr_ext.c" />
     <ClCompile Include="..\..\Quake\pr_edict.c" />
     <ClCompile Include="..\..\Quake\pr_exec.c" />
     <ClCompile Include="..\..\Quake\r_alias.c" />
     <ClCompile Include="..\..\Quake\r_brush.c" />
     <ClCompile Include="..\..\Quake\r_part.c" />
+	<ClCompile Include="..\..\Quake\r_part_fte.c" />
     <ClCompile Include="..\..\Quake\r_sprite.c" />
     <ClCompile Include="..\..\Quake\r_world.c" />
     <ClCompile Include="..\..\Quake\sbar.c" />
     <ClCompile Include="..\..\Quake\snd_codec.c" />
+	<ClCompile Include="..\..\Quake\snd_voip.c" />
     <ClCompile Include="..\..\Quake\snd_dma.c" />
     <ClCompile Include="..\..\Quake\snd_flac.c" />
     <ClCompile Include="..\..\Quake\snd_mem.c" />

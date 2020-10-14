@@ -316,6 +316,18 @@
     <ClCompile Include="..\..\Quake\snd_mp3tag.c">
       <Filter>Sound</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Quake\r_part_fte.c">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Quake\snd_voip.c">
+      <Filter>Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Quake\fs_zip.c">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Quake\pr_ext.c">
+      <Filter>Main</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Quake\snd_codec.h">
