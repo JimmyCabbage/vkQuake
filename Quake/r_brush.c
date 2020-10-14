@@ -328,10 +328,6 @@ void R_RenderDynamicLightmaps (qmodel_t *model, msurface_t *fa)
 	if (fa->flags & SURF_DRAWTILED) //johnfitz -- not a lightmapped surface
 		return;
 
-	// add to lightmap chain
-	fa->polys->chain = lightmap[fa->lightmaptexturenum].polys;
-	lightmap[fa->lightmaptexturenum].polys = fa->polys;
-
 	// check for lightmap modification
 	for (maps=0; maps < MAXLIGHTMAPS && fa->styles[maps] != INVALID_LIGHTSTYLE; maps++)
 		if (d_lightstylevalue[fa->styles[maps]] != fa->cached_light[maps])
@@ -555,20 +551,7 @@ void GL_BuildLightmaps (void)
 	lightmap = NULL;
 	last_lightmap_allocated = 0;
 	lightmap_count = 0;
-
-	gl_lightmap_format = GL_RGBA;//FIXME: hardcoded for now!
-
-	switch (gl_lightmap_format)
-	{
-	case GL_RGBA:
-		lightmap_bytes = 4;
-		break;
-	case GL_BGRA:
-		lightmap_bytes = 4;
-		break;
-	default:
-		Sys_Error ("GL_BuildLightmaps: bad lightmap format");
-	}
+	lightmap_bytes = 4;
 
 	for (j=1 ; j<MAX_MODELS ; j++)
 	{
@@ -906,62 +889,20 @@ void R_BuildLightMap (qmodel_t *model, msurface_t *surf, byte *dest, int stride)
 
 // bound, invert, and shift
 // store:
-	switch (gl_lightmap_format)
+	stride -= smax * 4;
+	bl = blocklights;
+	for (i=0 ; i<tmax ; i++, dest += stride)
 	{
-	case GL_RGBA:
-		stride -= smax * 4;
-		bl = blocklights;
-		for (i=0 ; i<tmax ; i++, dest += stride)
+		for (j=0 ; j<smax ; j++)
 		{
-			for (j=0 ; j<smax ; j++)
-			{
-				if (gl_overbright.value)
-				{
-					r = *bl++ >> 8;
-					g = *bl++ >> 8;
-					b = *bl++ >> 8;
-				}
-				else
-				{
-					r = *bl++ >> 7;
-					g = *bl++ >> 7;
-					b = *bl++ >> 7;
-				}
-				*dest++ = (r > 255)? 255 : r;
-				*dest++ = (g > 255)? 255 : g;
-				*dest++ = (b > 255)? 255 : b;
-				*dest++ = 255;
-			}
+			r = *bl++ >> 8;
+			g = *bl++ >> 8;
+			b = *bl++ >> 8;
+			*dest++ = (r > 255)? 255 : r;
+			*dest++ = (g > 255)? 255 : g;
+			*dest++ = (b > 255)? 255 : b;
+			*dest++ = 255;
 		}
-		break;
-	case GL_BGRA:
-		stride -= smax * 4;
-		bl = blocklights;
-		for (i=0 ; i<tmax ; i++, dest += stride)
-		{
-			for (j=0 ; j<smax ; j++)
-			{
-				if (gl_overbright.value)
-				{
-					r = *bl++ >> 8;
-					g = *bl++ >> 8;
-					b = *bl++ >> 8;
-				}
-				else
-				{
-					r = *bl++ >> 7;
-					g = *bl++ >> 7;
-					b = *bl++ >> 7;
-				}
-				*dest++ = (b > 255)? 255 : b;
-				*dest++ = (g > 255)? 255 : g;
-				*dest++ = (r > 255)? 255 : r;
-				*dest++ = 255;
-			}
-		}
-		break;
-	default:
-		Sys_Error ("R_BuildLightMap: bad lightmap format");
 	}
 }
 
