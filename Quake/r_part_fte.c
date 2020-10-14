@@ -6855,7 +6855,8 @@ static void PScript_DrawParticleTypes (float pframetime)
 	static float flurrytime;
 	qboolean doflurry;
 	int batchflags;
-	unsigned int i, o;
+	unsigned int i;
+	//unsigned int i, o;
 
 	if (r_plooksdirty)
 	{
@@ -7631,79 +7632,79 @@ endtype:
 	Fog_DisableGFog (); //additive stuff looks like arse. this stuff should really be done in a fragment shader, although we could also fake things here
 
 	//mess around with tmu states
-	GL_DisableMultitexture();
-	glEnable(GL_TEXTURE_2D);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	//make sure the colour values are used.
-
-	//other states
-	glEnable(GL_BLEND);	//yes, we need blending
-	glDisable(GL_ALPHA_TEST);
-	glDepthMask(GL_FALSE);	//don't write depth. this prevents the particles from fighting each other, although alpha-blended particles will still be weird.
-	GL_PolygonOffset (OFFSET_DECAL);
-	glDisable(GL_CULL_FACE);
-
-	//mess around with where glDrawElements gets its data from
-	GL_BindBuffer (GL_ARRAY_BUFFER, 0);
-	GL_BindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
-	GL_ClientActiveTextureFunc (GL_TEXTURE0_ARB);
-	glEnableClientState (GL_VERTEX_ARRAY);
-	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState (GL_COLOR_ARRAY);
-
-	for (o = 0; o < 3; o++)
-	{
-		static const struct
-		{
-			unsigned int order;
-			GLenum srcf;
-			GLenum dstf;
-		} factors[] = {
-			{1, GL_SRC_ALPHA,	GL_ONE_MINUS_SRC_ALPHA},	//BM_BLEND
-			{1, GL_SRC_COLOR,	GL_ONE_MINUS_SRC_COLOR},	//BM_BLENDCOLOUR
-			{2, GL_SRC_ALPHA,	GL_ONE},					//BM_ADDA
-			{2, GL_SRC_COLOR,	GL_ONE},					//BM_ADDC	sort-additive
-			{0, GL_SRC_ALPHA,	GL_ONE_MINUS_SRC_COLOR},	//BM_SUBTRACT
-			{0, GL_ZERO,		GL_ONE_MINUS_SRC_ALPHA},	//BM_INVMODA	sort-decal
-			{0, GL_ZERO,		GL_ONE_MINUS_SRC_COLOR},	//BM_INVMODC	sort-decal
-			{2, GL_ONE,			GL_ONE_MINUS_SRC_ALPHA}		//BM_PREMUL	sort-additive
-		};
-
-		for (i = 0; i < cl_numstris; i++)
-		{
-			if (factors[cl_stris[i].blendmode].order != o)
-				continue;
-
-			glBlendFunc(factors[cl_stris[i].blendmode].srcf, factors[cl_stris[i].blendmode].dstf);
-
-			glVertexPointer(3, GL_FLOAT, sizeof(*cl_strisvertv), cl_strisvertv + cl_stris[i].firstvert);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(*cl_strisvertt), cl_strisvertt + cl_stris[i].firstvert);
-			glColorPointer(4, GL_FLOAT, sizeof(*cl_strisvertc), cl_strisvertc + cl_stris[i].firstvert);
-			if (cl_stris[i].beflags & BEF_LINES)
-			{
-				glDisable(GL_TEXTURE_2D);
-				glShadeModel(GL_SMOOTH);
-//				glDrawRangeElements(GL_LINES, 0, cl_stris[i].numvert, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
-				glDrawElements(GL_LINES, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
-				glEnable(GL_TEXTURE_2D);
-			}
-			else
-			{
-				GL_Bind(cl_stris[i].texture);
-//				glDrawRangeElements(GL_TRIANGLES, 0, cl_stris[i].numvert, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
-				glDrawElements(GL_TRIANGLES, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
-			}
-		}
-	}
-	glDisableClientState (GL_VERTEX_ARRAY);
-	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState (GL_COLOR_ARRAY);
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
-	glShadeModel(GL_FLAT);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_CULL_FACE);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GL_PolygonOffset (OFFSET_NONE);
+	//GL_DisableMultitexture();
+	//glEnable(GL_TEXTURE_2D);
+	//glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	//make sure the colour values are used.
+	//
+	////other states
+	//glEnable(GL_BLEND);	//yes, we need blending
+	//glDisable(GL_ALPHA_TEST);
+	//glDepthMask(GL_FALSE);	//don't write depth. this prevents the particles from fighting each other, although alpha-blended particles will still be weird.
+	//GL_PolygonOffset (OFFSET_DECAL);
+	//glDisable(GL_CULL_FACE);
+	//
+	////mess around with where glDrawElements gets its data from
+	//GL_BindBuffer (GL_ARRAY_BUFFER, 0);
+	//GL_BindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
+	//GL_ClientActiveTextureFunc (GL_TEXTURE0_ARB);
+	//glEnableClientState (GL_VERTEX_ARRAY);
+	//glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+	//glEnableClientState (GL_COLOR_ARRAY);
+	//
+	//for (o = 0; o < 3; o++)
+	//{
+	//	static const struct
+	//	{
+	//		unsigned int order;
+	//		GLenum srcf;
+	//		GLenum dstf;
+	//	} factors[] = {
+	//		{1, GL_SRC_ALPHA,	GL_ONE_MINUS_SRC_ALPHA},	//BM_BLEND
+	//		{1, GL_SRC_COLOR,	GL_ONE_MINUS_SRC_COLOR},	//BM_BLENDCOLOUR
+	//		{2, GL_SRC_ALPHA,	GL_ONE},					//BM_ADDA
+	//		{2, GL_SRC_COLOR,	GL_ONE},					//BM_ADDC	sort-additive
+	//		{0, GL_SRC_ALPHA,	GL_ONE_MINUS_SRC_COLOR},	//BM_SUBTRACT
+	//		{0, GL_ZERO,		GL_ONE_MINUS_SRC_ALPHA},	//BM_INVMODA	sort-decal
+	//		{0, GL_ZERO,		GL_ONE_MINUS_SRC_COLOR},	//BM_INVMODC	sort-decal
+	//		{2, GL_ONE,			GL_ONE_MINUS_SRC_ALPHA}		//BM_PREMUL	sort-additive
+	//	};
+	//
+	//	for (i = 0; i < cl_numstris; i++)
+	//	{
+	//		if (factors[cl_stris[i].blendmode].order != o)
+	//			continue;
+	//
+	//		glBlendFunc(factors[cl_stris[i].blendmode].srcf, factors[cl_stris[i].blendmode].dstf);
+	//
+	//		glVertexPointer(3, GL_FLOAT, sizeof(*cl_strisvertv), cl_strisvertv + cl_stris[i].firstvert);
+	//		glTexCoordPointer(2, GL_FLOAT, sizeof(*cl_strisvertt), cl_strisvertt + cl_stris[i].firstvert);
+	//		glColorPointer(4, GL_FLOAT, sizeof(*cl_strisvertc), cl_strisvertc + cl_stris[i].firstvert);
+	//		if (cl_stris[i].beflags & BEF_LINES)
+	//		{
+	//			glDisable(GL_TEXTURE_2D);
+	//			glShadeModel(GL_SMOOTH);
+//	//			glDrawRangeElements(GL_LINES, 0, cl_stris[i].numvert, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
+	//			glDrawElements(GL_LINES, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
+	//			glEnable(GL_TEXTURE_2D);
+	//		}
+	//		else
+	//		{
+	//			GL_Bind(cl_stris[i].texture);
+//	//			glDrawRangeElements(GL_TRIANGLES, 0, cl_stris[i].numvert, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
+	//			glDrawElements(GL_TRIANGLES, cl_stris[i].numidx, GL_UNSIGNED_SHORT, cl_strisidx + cl_stris[i].firstidx);
+	//		}
+	//	}
+	//}
+	//glDisableClientState (GL_VERTEX_ARRAY);
+	//glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState (GL_COLOR_ARRAY);
+	//glEnable(GL_TEXTURE_2D);
+	//glDisable(GL_BLEND);
+	//glShadeModel(GL_FLAT);
+	//glDepthMask(GL_TRUE);
+	//glEnable(GL_CULL_FACE);
+	//glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//GL_PolygonOffset (OFFSET_NONE);
 	cl_numstris = 0;
 	cl_numstrisvert = 0;
 	cl_numstrisidx = 0;
