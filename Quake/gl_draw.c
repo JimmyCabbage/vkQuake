@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
+qboolean	premul_hud = false;//true;
 cvar_t		scr_conalpha = {"scr_conalpha", "0.5", CVAR_ARCHIVE}; //johnfitz
 
 qpic_t		*draw_disc;
@@ -119,7 +120,7 @@ typedef struct cachepic_s
 	byte		padding[32];	// for appended glpic
 } cachepic_t;
 
-#define	MAX_CACHED_PICS		128
+#define	MAX_CACHED_PICS		512	//Spike -- increased to avoid csqc issues.
 cachepic_t	menu_cachepics[MAX_CACHED_PICS];
 int			menu_numcachepics;
 
@@ -201,7 +202,7 @@ void Scrap_Upload (void)
 	{
 		sprintf (name, "scrap%i", i);
 		scrap_textures[i] = TexMgr_LoadImage (NULL, name, BLOCK_WIDTH, BLOCK_HEIGHT, SRC_INDEXED, scrap_texels[i],
-			"", (src_offset_t)scrap_texels[i], TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
+			"", (src_offset_t)scrap_texels[i], (premul_hud?TEXPREF_PREMULTIPLY:0)|TEXPREF_ALPHA | TEXPREF_OVERWRITE | TEXPREF_NOPICMIP);
 	}
 
 	scrap_dirty = false;
@@ -284,12 +285,25 @@ qpic_t *Draw_PicFromWad (const char *name)
 	return &pic->pic;
 }
 
+qpic_t	*Draw_GetCachedPic (const char *path)
+{
+	cachepic_t	*pic;
+	int			i;
+
+	for (pic=menu_cachepics, i=0 ; i<menu_numcachepics ; pic++, i++)
+	{
+		if (!strcmp (path, pic->name))
+			return &pic->pic;
+	}
+	return NULL;
+}
+
 /*
 ================
 Draw_CachePic
 ================
 */
-qpic_t	*Draw_CachePic (const char *path)
+qpic_t	*Draw_TryCachePic (const char *path)
 {
 	cachepic_t	*pic;
 	int			i;
@@ -306,12 +320,30 @@ qpic_t	*Draw_CachePic (const char *path)
 	menu_numcachepics++;
 	strcpy (pic->name, path);
 
+	if (strcmp("lmp", COM_FileGetExtension(path)))
+	{
+		char npath[MAX_QPATH];
+		COM_StripExtension(path, npath, sizeof(npath));
+		gl.gltexture = TexMgr_LoadImage (NULL, npath, 0, 0, SRC_EXTERNAL, NULL, npath, 0, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP);
+
+		pic->pic.width = gl.gltexture->width;
+		pic->pic.height = gl.gltexture->height;
+
+		gl.sl = 0;
+		gl.sh = (float)pic->pic.width/(float)TexMgr_PadConditional(pic->pic.width); //johnfitz
+		gl.tl = 0;
+		gl.th = (float)pic->pic.height/(float)TexMgr_PadConditional(pic->pic.height); //johnfitz
+		memcpy (pic->pic.data, &gl, sizeof(glpic_t));
+
+		return &pic->pic;
+	}
+
 //
 // load the pic from disk
 //
 	dat = (qpic_t *)COM_LoadTempFile (path, NULL);
 	if (!dat)
-		Sys_Error ("Draw_CachePic: failed to load %s", path);
+		return NULL;
 	SwapPic (dat);
 
 	// HACK HACK HACK --- we need to keep the bytes for
@@ -324,7 +356,7 @@ qpic_t	*Draw_CachePic (const char *path)
 	pic->pic.height = dat->height;
 
 	gl.gltexture = TexMgr_LoadImage (NULL, path, dat->width, dat->height, SRC_INDEXED, dat->data, path,
-									  sizeof(int)*2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //johnfitz -- TexMgr
+									  sizeof(int)*2, (premul_hud?TEXPREF_PREMULTIPLY:0)|TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP); //johnfitz -- TexMgr
 	gl.sl = 0;
 	gl.sh = (float)dat->width/(float)TexMgr_PadConditional(dat->width); //johnfitz
 	gl.tl = 0;
@@ -332,6 +364,14 @@ qpic_t	*Draw_CachePic (const char *path)
 	memcpy (pic->pic.data, &gl, sizeof(glpic_t));
 
 	return &pic->pic;
+}
+
+qpic_t	*Draw_CachePic (const char *path)
+{
+	qpic_t *pic = Draw_TryCachePic(path);
+	if (!pic)
+		Sys_Error ("Draw_CachePic: failed to load %s", path);
+	return pic;
 }
 
 /*
@@ -374,12 +414,15 @@ void Draw_LoadPics (void)
 {
 	byte		*data;
 	src_offset_t	offset;
+	lumpinfo_t *info;
 
-	data = (byte *) W_GetLumpName ("conchars");
-	if (!data) Sys_Error ("Draw_LoadPics: couldn't load conchars");
+	data = (byte *) W_GetLumpName ("conchars", &info);
+	if (!data || info->size < 128*128)	Sys_Error ("Draw_LoadPics: couldn't load conchars");
+	if (info->size != 128*128)			Con_Warning("Invalid size for gfx.wad conchars lump - attempting to ignore for compat.\n");
+	else if (info->type != TYP_MIPTEX)	Con_DWarning("Invalid type for gfx.wad conchars lump - attempting to ignore for compat.\n"); //not really a miptex, but certainly NOT a qpic.
 	offset = (src_offset_t)data - (src_offset_t)wad_base;
 	char_texture = TexMgr_LoadImage (NULL, WADFILENAME":conchars", 128, 128, SRC_INDEXED, data,
-		WADFILENAME, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+		WADFILENAME, offset, (premul_hud?TEXPREF_PREMULTIPLY:0)|TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 	draw_disc = Draw_PicFromWad ("disc");
 	draw_backtile = Draw_PicFromWad ("backtile");
@@ -401,16 +444,17 @@ void Draw_NewGame (void)
 
 	Scrap_Upload (); //creates 2 empty gltextures
 
+	// empty lmp cache
+	for (pic = menu_cachepics, i = 0; i < menu_numcachepics; pic++, i++)
+		pic->name[0] = 0;
+	menu_numcachepics = 0;
+
 	// reload wad pics
 	W_LoadWadFile (); //johnfitz -- filename is now hard-coded for honesty
 	Draw_LoadPics ();
 	SCR_LoadPics ();
 	Sbar_LoadPics ();
-
-	// empty lmp cache
-	for (pic = menu_cachepics, i = 0; i < menu_numcachepics; pic++, i++)
-		pic->name[0] = 0;
-	menu_numcachepics = 0;
+	PR_ReloadPics(false);
 }
 
 /*

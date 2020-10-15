@@ -141,7 +141,7 @@ void R_MarkSurfaces (void)
 						{
 							rs_brushpolys++; //count wpolys here
 							R_ChainSurface(surf, chain_world);
-							R_RenderDynamicLightmaps(surf);
+							R_RenderDynamicLightmaps(cl.worldmodel, surf);
 							if (surf->texinfo->texture->warpimage)
 								surf->texinfo->texture->update_warp = true;
 						}

@@ -41,8 +41,7 @@ ALIAS MODEL DISPLAY LIST GENERATION
 static glheap_t * vertex_buffer_heaps[GEOMETRY_MAX_HEAPS];
 static glheap_t * index_buffer_heaps[GEOMETRY_MAX_HEAPS];
 
-static void GL_MakeAliasModelDisplayLists_VBO (void);
-static void GLMesh_LoadVertexBuffer (qmodel_t *m, const aliashdr_t *hdr);
+static void GLMesh_LoadVertexBuffer (qmodel_t *m, aliashdr_t *hdr);
 
 /*
 ================

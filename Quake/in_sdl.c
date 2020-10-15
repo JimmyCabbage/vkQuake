@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 static qboolean	textmode;
+extern qboolean	bind_grab;	//from the menu code, so that we regrab the mouse in order to pass inputs through
 
 static cvar_t in_debugkeys = {"in_debugkeys", "0", CVAR_NONE};
 
@@ -95,40 +96,6 @@ static void IN_EndIgnoringMouseEvents(void)
 	if (SDL_GetEventFilter(&currentFilter, &currentUserdata) == SDL_TRUE)
 		SDL_SetEventFilter(NULL, NULL);
 }
-
-void IN_Activate (void)
-{
-	if (no_mouse)
-		return;
-
-	if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0)
-	{
-		Con_Printf("WARNING: SDL_SetRelativeMouseMode(SDL_TRUE) failed.\n");
-	}
-
-	IN_EndIgnoringMouseEvents();
-
-	total_dx = 0;
-	total_dy = 0;
-}
-
-static void IN_Deactivate (qboolean free_cursor)
-{
-	if (no_mouse)
-		return;
-
-	if (free_cursor)
-	{
-		SDL_SetRelativeMouseMode(SDL_FALSE);
-	}
-
-	/* discard all mouse events when input is deactivated */
-	if (cl.qcvm.extfuncs.CSQC_InputEvent && free_cursor)
-		IN_EndIgnoringMouseEvents();
-	else
-		IN_BeginIgnoringMouseEvents();
-}
-#endif
 
 static void IN_UpdateGrabs_Internal(qboolean forecerelease)
 {

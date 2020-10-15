@@ -201,7 +201,10 @@ R_SetWateralpha_f -- ericw
 */
 static void R_SetWateralpha_f (cvar_t *var)
 {
+	if (cls.signon == SIGNONS && cl.worldmodel && !(cl.worldmodel->contentstransparent&SURF_DRAWWATER) && var->value < 1)
+		Con_Warning("Map does not appear to be water-vised\n");
 	map_wateralpha = var->value;
+	map_fallbackalpha = var->value;
 }
 
 /*
@@ -211,6 +214,8 @@ R_SetLavaalpha_f -- ericw
 */
 static void R_SetLavaalpha_f (cvar_t *var)
 {
+	if (cls.signon == SIGNONS && cl.worldmodel && !(cl.worldmodel->contentstransparent&SURF_DRAWLAVA) && var->value && var->value < 1)
+		Con_Warning("Map does not appear to be lava-vised\n");
 	map_lavaalpha = var->value;
 }
 
@@ -221,6 +226,8 @@ R_SetTelealpha_f -- ericw
 */
 static void R_SetTelealpha_f (cvar_t *var)
 {
+	if (cls.signon == SIGNONS && cl.worldmodel && !(cl.worldmodel->contentstransparent&SURF_DRAWTELE) && var->value && var->value < 1)
+		Con_Warning("Map does not appear to be tele-vised\n");
 	map_telealpha = var->value;
 }
 
@@ -231,6 +238,8 @@ R_SetSlimealpha_f -- ericw
 */
 static void R_SetSlimealpha_f (cvar_t *var)
 {
+	if (cls.signon == SIGNONS && cl.worldmodel && !(cl.worldmodel->contentstransparent&SURF_DRAWSLIME) && var->value && var->value < 1)
+		Con_Warning("Map does not appear to be slime-vised\n");
 	map_slimealpha = var->value;
 }
 
@@ -242,13 +251,13 @@ GL_WaterAlphaForSurfface -- ericw
 float GL_WaterAlphaForSurface (msurface_t *fa)
 {
 	if (fa->flags & SURF_DRAWLAVA)
-		return map_lavaalpha > 0 ? map_lavaalpha : map_wateralpha;
+		return map_lavaalpha > 0 ? map_lavaalpha : map_fallbackalpha;
 	else if (fa->flags & SURF_DRAWTELE)
-		return map_telealpha > 0 ? map_telealpha : map_wateralpha;
+		return map_telealpha > 0 ? map_telealpha : map_fallbackalpha;
 	else if (fa->flags & SURF_DRAWSLIME)
-		return map_slimealpha > 0 ? map_slimealpha : map_wateralpha;
+		return map_slimealpha > 0 ? map_slimealpha : map_fallbackalpha;
 	else
-		return map_wateralpha;
+		return map_wateralpha;// > 0 ? map_wateralpha : map_fallbackalpha;
 }
 
 /*
@@ -2260,7 +2269,7 @@ void R_TranslateNewPlayerSkin (int playernum)
 	int		skinnum;
 
 //get correct texture pixels
-	currententity = &cl_entities[1+playernum];
+	currententity = &cl.entities[1+playernum];
 
 	if (!currententity->model || currententity->model->type != mod_alias)
 		return;
@@ -2269,19 +2278,28 @@ void R_TranslateNewPlayerSkin (int playernum)
 
 	skinnum = currententity->skinnum;
 
-	//TODO: move these tests to the place where skinnum gets received from the server
-	if (skinnum < 0 || skinnum >= paliashdr->numskins)
+	if (paliashdr->numskins)
 	{
-		Con_DPrintf("(%d): Invalid player skin #%d\n", playernum, skinnum);
-		skinnum = 0;
+		//TODO: move these tests to the place where skinnum gets received from the server
+		if (skinnum < 0 || skinnum >= paliashdr->numskins)
+		{
+			Con_DPrintf("(%d): Invalid player skin #%d\n", playernum, skinnum);
+			skinnum = 0;
+		}
+
+		pixels = (byte *)paliashdr + paliashdr->texels[skinnum]; // This is not a persistent place!
+
+	//upload new image
+		q_snprintf(name, sizeof(name), "player_%i", playernum);
+		playertextures[playernum] = TexMgr_LoadImage (currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight,
+			SRC_INDEXED, pixels, paliashdr->gltextures[skinnum][0]->source_file, paliashdr->gltextures[skinnum][0]->source_offset, TEXPREF_PAD | TEXPREF_OVERWRITE);
 	}
-
-	pixels = (byte *)paliashdr + paliashdr->texels[skinnum]; // This is not a persistent place!
-
-//upload new image
-	q_snprintf(name, sizeof(name), "player_%i", playernum);
-	playertextures[playernum] = TexMgr_LoadImage (currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight,
-		SRC_INDEXED, pixels, paliashdr->gltextures[skinnum][0]->source_file, paliashdr->gltextures[skinnum][0]->source_offset, TEXPREF_PAD | TEXPREF_OVERWRITE);
+	else
+	{
+		q_snprintf(name, sizeof(name), "player_%i", playernum);
+		playertextures[playernum] = TexMgr_LoadImage (currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight,
+			SRC_EXTERNAL, NULL, "skins/base.pcx", 0, TEXPREF_PAD | TEXPREF_OVERWRITE);
+	}
 
 //now recolor it
 	R_TranslatePlayerSkin (playernum);
@@ -2313,10 +2331,11 @@ static void R_ParseWorldspawn (void)
 	char key[128], value[4096];
 	const char *data;
 
-	map_wateralpha = r_wateralpha.value;
-	map_lavaalpha = r_lavaalpha.value;
-	map_telealpha = r_telealpha.value;
-	map_slimealpha = r_slimealpha.value;
+	map_fallbackalpha = r_wateralpha.value;
+	map_wateralpha = (cl.worldmodel->contentstransparent&SURF_DRAWWATER)?r_wateralpha.value:1;
+	map_lavaalpha = (cl.worldmodel->contentstransparent&SURF_DRAWLAVA)?r_lavaalpha.value:1;
+	map_telealpha = (cl.worldmodel->contentstransparent&SURF_DRAWTELE)?r_telealpha.value:1;
+	map_slimealpha = (cl.worldmodel->contentstransparent&SURF_DRAWSLIME)?r_slimealpha.value:1;
 
 	data = COM_Parse(cl.worldmodel->entities);
 	if (!data)
@@ -2342,7 +2361,7 @@ static void R_ParseWorldspawn (void)
 		q_strlcpy(value, com_token, sizeof(value));
 
 		if (!strcmp("wateralpha", key))
-			map_wateralpha = atof(value);
+			map_fallbackalpha = map_wateralpha = atof(value);
 
 		if (!strcmp("lavaalpha", key))
 			map_lavaalpha = atof(value);
@@ -2375,6 +2394,9 @@ void R_NewMap (void)
 
 	r_viewleaf = NULL;
 	R_ClearParticles ();
+#ifdef PSET_SCRIPT
+	PScript_ClearParticles();
+#endif
 	GL_DeleteBModelVertexBuffer();
 
 	GL_BuildLightmaps ();
