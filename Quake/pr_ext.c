@@ -4593,19 +4593,19 @@ static qpic_t *DrawQC_CachePic(const char *picname, int cachetype)
 }
 static void DrawQC_CharacterQuad (float x, float y, int num, float w, float h)
 {
-	float size = 0.0625;
-	float frow = (num>>4)*size;
-	float fcol = (num&15)*size;
-	size = 0.0624;	//avoid rounding errors...
+	//float size = 0.0625;
+	//float frow = (num>>4)*size;
+	//float fcol = (num&15)*size;
+	//size = 0.0624;	//avoid rounding errors...
 
-	glTexCoord2f (fcol, frow);
-	glVertex2f (x, y);
-	glTexCoord2f (fcol + size, frow);
-	glVertex2f (x+w, y);
-	glTexCoord2f (fcol + size, frow + size);
-	glVertex2f (x+w, y+h);
-	glTexCoord2f (fcol, frow + size);
-	glVertex2f (x, y+h);
+	//glTexCoord2f (fcol, frow);
+	//glVertex2f (x, y);
+	//glTexCoord2f (fcol + size, frow);
+	//glVertex2f (x+w, y);
+	//glTexCoord2f (fcol + size, frow + size);
+	//glVertex2f (x+w, y+h);
+	//glTexCoord2f (fcol, frow + size);
+	//glVertex2f (x, y+h);
 }
 static void PF_cl_drawcharacter(void)
 {
@@ -4621,69 +4621,69 @@ static void PF_cl_drawcharacter(void)
 	if (charcode == 32)
 		return; //don't waste time on spaces
 
-	GL_Bind (char_texture);
-	glColor4f (rgb[0], rgb[1], rgb[2], alpha);
-	glBegin (GL_QUADS);
-	DrawQC_CharacterQuad (pos[0], pos[1], charcode, size[0], size[1]);
-	glEnd ();
+	//GL_Bind (char_texture);
+	//glColor4f (rgb[0], rgb[1], rgb[2], alpha);
+	//glBegin (GL_QUADS);
+	//DrawQC_CharacterQuad (pos[0], pos[1], charcode, size[0], size[1]);
+	//glEnd ();
 }
 
 static void PF_cl_drawrawstring(void)
 {
-	extern gltexture_t *char_texture;
+	//extern gltexture_t *char_texture;
 
-	float *pos	= G_VECTOR(OFS_PARM0);
-	const char *text = G_STRING (OFS_PARM1);
-	float *size	= G_VECTOR(OFS_PARM2);
-	float *rgb	= G_VECTOR(OFS_PARM3);
-	float alpha	= G_FLOAT (OFS_PARM4);
+	//float *pos	= G_VECTOR(OFS_PARM0);
+	//const char *text = G_STRING (OFS_PARM1);
+	//float *size	= G_VECTOR(OFS_PARM2);
+	//float *rgb	= G_VECTOR(OFS_PARM3);
+	//float alpha	= G_FLOAT (OFS_PARM4);
 //	int flags	= G_FLOAT (OFS_PARM5);
 
-	float x = pos[0];
-	int c;
+	//float x = pos[0];
+	//int c;
 
-	if (!*text)
-		return; //don't waste time on spaces
+	//if (!*text)
+	//	return; //don't waste time on spaces
 
-	GL_Bind (char_texture);
-	glColor4f (rgb[0], rgb[1], rgb[2], alpha);
-	glBegin (GL_QUADS);
-	while ((c = *text++))
-	{
-		DrawQC_CharacterQuad (x, pos[1], c, size[0], size[1]);
-		x += size[0];
-	}
-	glEnd ();
+	//GL_Bind (char_texture);
+	//glColor4f (rgb[0], rgb[1], rgb[2], alpha);
+	//glBegin (GL_QUADS);
+	//while ((c = *text++))
+	//{
+	//	DrawQC_CharacterQuad (x, pos[1], c, size[0], size[1]);
+	//	x += size[0];
+	//}
+	//glEnd ();
 }
 static void PF_cl_drawstring(void)
 {
-	extern gltexture_t *char_texture;
+	//extern gltexture_t *char_texture;
 
-	float *pos	= G_VECTOR(OFS_PARM0);
-	const char *text = G_STRING (OFS_PARM1);
-	float *size	= G_VECTOR(OFS_PARM2);
-	float *rgb	= G_VECTOR(OFS_PARM3);
-	float alpha	= G_FLOAT (OFS_PARM4);
+	//float *pos	= G_VECTOR(OFS_PARM0);
+	//const char *text = G_STRING (OFS_PARM1);
+	//float *size	= G_VECTOR(OFS_PARM2);
+	//float *rgb	= G_VECTOR(OFS_PARM3);
+	//float alpha	= G_FLOAT (OFS_PARM4);
 //	int flags	= G_FLOAT (OFS_PARM5);
 
-	float x = pos[0];
-	struct markup_s mu;
-	int c;
+	//float x = pos[0];
+	//struct markup_s mu;
+	//int c;
 
-	if (!*text)
-		return; //don't waste time on spaces
+	//if (!*text)
+	//	return; //don't waste time on spaces
 
-	PR_Markup_Begin(&mu, text, rgb, alpha);
+	//PR_Markup_Begin(&mu, text, rgb, alpha);
 
-	GL_Bind (char_texture);
-	glBegin (GL_QUADS);
-	while ((c = PR_Markup_Parse(&mu)))
-	{
-		glColor4fv (mu.colour);
-		DrawQC_CharacterQuad (x, pos[1], c, size[0], size[1]);
-		x += size[0];
-	}
-	glEnd ();
+	//GL_Bind (char_texture);
+	//glBegin (GL_QUADS);
+	//while ((c = PR_Markup_Parse(&mu)))
+	//{
+	//	glColor4fv (mu.colour);
+	//	DrawQC_CharacterQuad (x, pos[1], c, size[0], size[1]);
+	//	x += size[0];
+	//}
+	//glEnd ();
 }
 static void PF_cl_stringwidth(void)
 {
@@ -4712,19 +4712,19 @@ static void PF_cl_stringwidth(void)
 
 static void PF_cl_drawsetclip(void)
 {
-	float s = CLAMP (1.0, scr_sbarscale.value, (float)glwidth / 320.0);
+	//float s = CLAMP (1.0, scr_sbarscale.value, (float)glwidth / 320.0);
+	//
+	//float x = G_FLOAT(OFS_PARM0)*s;
+	//float y = G_FLOAT(OFS_PARM1)*s;
+	//float w = G_FLOAT(OFS_PARM2)*s;
+	//float h = G_FLOAT(OFS_PARM3)*s;
 
-	float x = G_FLOAT(OFS_PARM0)*s;
-	float y = G_FLOAT(OFS_PARM1)*s;
-	float w = G_FLOAT(OFS_PARM2)*s;
-	float h = G_FLOAT(OFS_PARM3)*s;
-
-	glScissor(x, glheight-(y+h), w, h);
-	glEnable(GL_SCISSOR_TEST);
+	//glScissor(x, glheight-(y+h), w, h);
+	//glEnable(GL_SCISSOR_TEST);
 }
 static void PF_cl_drawresetclip(void)
 {
-	glDisable(GL_SCISSOR_TEST);
+	//glDisable(GL_SCISSOR_TEST);
 }
 
 static void PF_cl_precachepic(void)
@@ -4747,18 +4747,18 @@ static void PF_cl_iscachedpic(void)
 
 static void PF_cl_drawpic(void)
 {
-	float *pos	= G_VECTOR(OFS_PARM0);
-	qpic_t *pic	= DrawQC_CachePic(G_STRING(OFS_PARM1), false);
-	float *size	= G_VECTOR(OFS_PARM2);
-	float *rgb	= G_VECTOR(OFS_PARM3);
-	float alpha	= G_FLOAT (OFS_PARM4);
+	//float *pos	= G_VECTOR(OFS_PARM0);
+	//qpic_t *pic	= DrawQC_CachePic(G_STRING(OFS_PARM1), false);
+	//float *size	= G_VECTOR(OFS_PARM2);
+	//float *rgb	= G_VECTOR(OFS_PARM3);
+	//float alpha	= G_FLOAT (OFS_PARM4);
 //	int flags	= G_FLOAT (OFS_PARM5);
 
-	if (pic)
-	{
-		glColor4f (rgb[0], rgb[1], rgb[2], alpha);
-		Draw_SubPic (pos[0], pos[1], size[0], size[1], pic, 0, 0, 1, 1);
-	}
+	//if (pic)
+	//{
+	//	glColor4f (rgb[0], rgb[1], rgb[2], alpha);
+	//	Draw_SubPic (pos[0], pos[1], size[0], size[1], pic, 0, 0, 1, 1);
+	//}
 }
 
 static void PF_cl_getimagesize(void)
@@ -4772,42 +4772,42 @@ static void PF_cl_getimagesize(void)
 
 static void PF_cl_drawsubpic(void)
 {
-	float *pos	= G_VECTOR(OFS_PARM0);
-	float *size	= G_VECTOR(OFS_PARM1);
-	qpic_t *pic	= DrawQC_CachePic(G_STRING(OFS_PARM2), false);
-	float *srcpos	= G_VECTOR(OFS_PARM3);
-	float *srcsize	= G_VECTOR(OFS_PARM4);
-	float *rgb	= G_VECTOR(OFS_PARM5);
-	float alpha	= G_FLOAT (OFS_PARM6); 
+	//float *pos	= G_VECTOR(OFS_PARM0);
+	//float *size	= G_VECTOR(OFS_PARM1);
+	//qpic_t *pic	= DrawQC_CachePic(G_STRING(OFS_PARM2), false);
+	//float *srcpos	= G_VECTOR(OFS_PARM3);
+	//float *srcsize	= G_VECTOR(OFS_PARM4);
+	//float *rgb	= G_VECTOR(OFS_PARM5);
+	//float alpha	= G_FLOAT (OFS_PARM6); 
 //	int flags	= G_FLOAT (OFS_PARM7);
 
-	if (pic)
-	{
-		glColor4f (rgb[0], rgb[1], rgb[2], alpha);
-		Draw_SubPic (pos[0], pos[1], size[0], size[1], pic, srcpos[0], srcpos[1], srcsize[0], srcsize[1]);
-	}
+	//if (pic)
+	//{
+	//	glColor4f (rgb[0], rgb[1], rgb[2], alpha);
+	//	Draw_SubPic (pos[0], pos[1], size[0], size[1], pic, srcpos[0], srcpos[1], srcsize[0], srcsize[1]);
+	//}
 }
 
 static void PF_cl_drawfill(void)
 {
-	float *pos	= G_VECTOR(OFS_PARM0);
-	float *size	= G_VECTOR(OFS_PARM1);
-	float *rgb	= G_VECTOR(OFS_PARM2);
-	float alpha	= G_FLOAT (OFS_PARM3);
+	//float *pos	= G_VECTOR(OFS_PARM0);
+	//float *size	= G_VECTOR(OFS_PARM1);
+	//float *rgb	= G_VECTOR(OFS_PARM2);
+	//float alpha	= G_FLOAT (OFS_PARM3);
 //	int flags	= G_FLOAT (OFS_PARM4);
 
-	glDisable (GL_TEXTURE_2D);
+	//glDisable (GL_TEXTURE_2D);
 
-	glColor4f (rgb[0], rgb[1], rgb[2], alpha);
+	//glColor4f (rgb[0], rgb[1], rgb[2], alpha);
 
-	glBegin (GL_QUADS);
-	glVertex2f (pos[0],			pos[1]);
-	glVertex2f (pos[0]+size[0],	pos[1]);
-	glVertex2f (pos[0]+size[0],	pos[1]+size[1]);
-	glVertex2f (pos[0],			pos[1]+size[1]);
-	glEnd ();
+	//glBegin (GL_QUADS);
+	//glVertex2f (pos[0],			pos[1]);
+	//glVertex2f (pos[0]+size[0],	pos[1]);
+	//glVertex2f (pos[0]+size[0],	pos[1]+size[1]);
+	//glVertex2f (pos[0],			pos[1]+size[1]);
+	//glEnd ();
 
-	glEnable (GL_TEXTURE_2D);
+	//glEnable (GL_TEXTURE_2D);
 }
 
 
