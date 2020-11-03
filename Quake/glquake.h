@@ -263,6 +263,7 @@ extern	int		r_framecount;
 extern	mplane_t	frustum[4];
 extern	int render_pass_index;
 extern	qboolean render_warp;
+extern	qboolean in_update_screen;
 
 //
 // view origin
@@ -498,6 +499,7 @@ void R_InitGPUBuffers();
 void R_SwapDynamicBuffers();
 void R_FlushDynamicBuffers();
 void R_CollectDynamicBufferGarbage();
+void R_CollectMeshBufferGarbage();
 byte * R_VertexAllocate(int size, VkBuffer * buffer, VkDeviceSize * buffer_offset);
 byte * R_IndexAllocate(int size, VkBuffer * buffer, VkDeviceSize * buffer_offset);
 byte * R_UniformAllocate(int size, VkBuffer * buffer, uint32_t * buffer_offset, VkDescriptorSet * descriptor_set);
